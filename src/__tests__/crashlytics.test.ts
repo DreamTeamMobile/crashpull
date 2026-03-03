@@ -82,11 +82,29 @@ describe("getTopIssues", () => {
     expect(params["filter.interval.end_time"]).toBeDefined();
   });
 
-  test("returns API response", async () => {
-    const data = { issues: [{ id: "abc" }], nextPageToken: "tok" };
-    mockApiGet.mockResolvedValueOnce(data);
+  test("transforms raw groups response into issues array", async () => {
+    const raw = {
+      groups: [
+        {
+          issue: { id: "abc", title: "NPE" },
+          metrics: [{ eventsCount: "42", impactedUsersCount: "5" }],
+        },
+      ],
+      nextPageToken: "tok",
+    };
+    mockApiGet.mockResolvedValueOnce(raw);
     const result = await getTopIssues();
-    expect(result).toEqual(data);
+    expect(result.issues).toHaveLength(1);
+    expect(result.issues[0].id).toBe("abc");
+    expect(result.issues[0].eventCount).toBe(42);
+    expect(result.issues[0].impactedDevicesCount).toBe(5);
+    expect(result.nextPageToken).toBe("tok");
+  });
+
+  test("handles empty groups", async () => {
+    mockApiGet.mockResolvedValueOnce({});
+    const result = await getTopIssues();
+    expect(result.issues).toEqual([]);
   });
 });
 

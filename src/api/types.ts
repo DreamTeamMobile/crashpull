@@ -6,7 +6,8 @@ export type FrameOwner = "DEVELOPER" | "VENDOR" | "SYSTEM" | "PLATFORM" | "RUNTI
 
 export interface Signal {
   signal: string;
-  code: string;
+  code?: string;
+  description?: string;
 }
 
 export interface Variant {
@@ -99,7 +100,27 @@ export interface Event {
   logs: string;
 }
 
-// Paginated response wrappers
+// Raw API response types (reports/topIssues)
+
+export interface TopIssueMetrics {
+  startTime: string;
+  endTime: string;
+  eventsCount: string;
+  impactedUsersCount: string;
+  sessionsCount?: string;
+}
+
+export interface TopIssueGroup {
+  issue: Issue;
+  metrics: TopIssueMetrics[];
+}
+
+export interface TopIssuesRawResponse {
+  groups?: TopIssueGroup[];
+  nextPageToken?: string;
+}
+
+// Normalized response used by commands
 
 export interface TopIssuesResponse {
   issues: Issue[];

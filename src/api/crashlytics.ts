@@ -4,7 +4,7 @@ import type {
   Issue,
   IssueState,
   ListEventsResponse,
-  TopIssuesResponse,
+  TopIssuesRawResponse,
 } from "./types.js";
 
 /** Maps human-friendly windows to ISO start_time values. */
@@ -26,7 +26,7 @@ export interface TopIssuesOpts {
   pageSize?: number;
 }
 
-export function getTopIssues(opts: TopIssuesOpts = {}) {
+export async function getTopIssues(opts: TopIssuesOpts = {}) {
   const params: Record<string, string> = {};
 
   if (opts.pageSize) {
@@ -49,7 +49,16 @@ export function getTopIssues(opts: TopIssuesOpts = {}) {
     }
   }
 
-  return apiGet<TopIssuesResponse>("reports/topIssues", params);
+  const raw = await apiGet<TopIssuesRawResponse>("reports/topIssues", params);
+  const issues: Issue[] = (raw.groups ?? []).map((g) => {
+    const m = g.metrics?.[0];
+    return {
+      ...g.issue,
+      eventCount: m ? Number(m.eventsCount) : undefined,
+      impactedDevicesCount: m ? Number(m.impactedUsersCount) : undefined,
+    };
+  });
+  return { issues, nextPageToken: raw.nextPageToken };
 }
 
 export function getIssue(issueId: string) {
