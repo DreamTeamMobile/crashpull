@@ -233,13 +233,50 @@ describe("runShow", () => {
       expect(out).toContain("--- java.lang.NullPointerException: Inner cause ---");
     });
 
-    test("omits stack trace when no exceptions", async () => {
+    test("falls back to threads when no exceptions (ANR)", async () => {
       mockListEvents.mockResolvedValueOnce({
-        events: [makeEvent({ exceptions: [] })],
+        events: [
+          makeEvent({
+            exceptions: [],
+            threads: [
+              { name: "main", crashed: false, frames: [] },
+              {
+                name: "RenderThread",
+                crashed: true,
+                frames: [
+                  {
+                    line: "",
+                    file: "",
+                    symbol: "qemu_pipe_read",
+                    library: "libOpenglSystemCommon.so",
+                    owner: "VENDOR",
+                    blamed: true,
+                  },
+                  {
+                    line: "",
+                    file: "",
+                    symbol: "HostConnection::rcEncoder",
+                    library: "libOpenglSystemCommon.so",
+                    owner: "VENDOR",
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      });
+      const out = await runShow({ issueId: "abcdef1234567890" });
+      expect(out).toContain("thread: RenderThread");
+      expect(out).toContain("> qemu_pipe_read (libOpenglSystemCommon.so)");
+      expect(out).toContain("  HostConnection::rcEncoder (libOpenglSystemCommon.so)");
+    });
+
+    test("omits stack trace when no exceptions and no threads", async () => {
+      mockListEvents.mockResolvedValueOnce({
+        events: [makeEvent({ exceptions: [], threads: [] })],
       });
       const out = await runShow({ issueId: "abcdef1234567890" });
       const lines = out.split("\n");
-      // Only header lines, no callstack
       expect(lines.length).toBeLessThanOrEqual(3);
     });
 

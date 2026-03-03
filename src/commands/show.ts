@@ -1,5 +1,5 @@
 import { getIssue, listEvents } from "../api/crashlytics.js";
-import type { Exception, Frame, Issue } from "../api/types.js";
+import type { Event, Exception, Frame, Issue, Thread } from "../api/types.js";
 import { formatJson } from "../format.js";
 import { resolveIssueId } from "../resolve-id.js";
 
@@ -13,7 +13,7 @@ function frameToString(frame: Frame): string {
   return `${frame.symbol} ${loc}`;
 }
 
-function buildCallstack(exceptions: Exception[]): string[] {
+function buildCallstackFromExceptions(exceptions: Exception[]): string[] {
   const lines: string[] = [];
   for (const [i, ex] of exceptions.entries()) {
     const header = `${ex.type}: ${ex.exceptionMessage}`;
@@ -23,6 +23,25 @@ function buildCallstack(exceptions: Exception[]): string[] {
     }
   }
   return lines;
+}
+
+function buildCallstackFromThreads(threads: Thread[], blameFrame?: Frame): string[] {
+  // Find thread containing the blamed frame, or the crashed thread, or first thread
+  const blamed = threads.find((t) =>
+    blameFrame && t.frames.some((f) => f.symbol === blameFrame.symbol && f.library === blameFrame.library),
+  ) ?? threads.find((t) => t.crashed) ?? threads[0];
+  if (!blamed) return [];
+  const lines: string[] = [`thread: ${blamed.name}`];
+  for (const frame of blamed.frames) {
+    lines.push(`${frame.blamed ? "> " : "  "}${frameToString(frame)}`);
+  }
+  return lines;
+}
+
+function extractCallstack(event: Event): string[] {
+  if (event.exceptions?.length) return buildCallstackFromExceptions(event.exceptions);
+  if (event.threads?.length) return buildCallstackFromThreads(event.threads, event.blameFrame);
+  return [];
 }
 
 function formatText(issue: Issue, callstack: string[], blameFrame: string | null): string {
@@ -48,8 +67,7 @@ export async function runShow(args: ShowArgs): Promise<string> {
   ]);
 
   const latestEvent = eventsResponse.events?.[0];
-  const exceptions = latestEvent?.exceptions?.length ? latestEvent.exceptions : [];
-  const callstack = exceptions.length ? buildCallstack(exceptions) : [];
+  const callstack = latestEvent ? extractCallstack(latestEvent) : [];
   const blameFrame = latestEvent?.blameFrame ? frameToString(latestEvent.blameFrame) : null;
 
   if (args.format === "json") {
