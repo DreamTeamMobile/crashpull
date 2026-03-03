@@ -29,6 +29,9 @@ export interface Issue {
   signals: Signal[];
   name: string;
   variants: Variant[];
+  eventCount?: number;
+  impactedDevicesCount?: number;
+  createTime?: string;
 }
 
 export interface Frame {
