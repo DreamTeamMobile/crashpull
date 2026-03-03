@@ -174,116 +174,40 @@ describe("runShow", () => {
     });
   });
 
-  describe("text output — ISSUE header", () => {
-    test("renders issue title and subtitle", async () => {
+  describe("text output", () => {
+    test("renders condensed header with title and subtitle", async () => {
       const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("ISSUE");
-      expect(out).toContain("NullPointerException");
-      expect(out).toContain("com.app.Main.run");
+      expect(out).toContain("NullPointerException — com.app.Main.run");
     });
 
-    test("renders type, state, events, users", async () => {
+    test("renders type, state, version range on one line", async () => {
       const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("Type:     FATAL");
-      expect(out).toContain("State:    OPEN");
-      expect(out).toContain("Events:   42");
-      expect(out).toContain("Users:    15");
+      expect(out).toContain("FATAL | OPEN | 1.0.0→1.2.0");
     });
 
-    test("renders version range", async () => {
+    test("renders blame frame", async () => {
       const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("1.0.0 → 1.2.0");
+      expect(out).toContain("Blame: com.app.Main.run (Main.java:42)");
     });
 
-    test("renders console URL", async () => {
+    test("renders stack trace with exception header", async () => {
       const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain(
-        "Console:  https://console.firebase.google.com/issue/abc",
-      );
-    });
-
-    test("renders age from createTime", async () => {
-      mockGetIssue.mockResolvedValueOnce(
-        makeIssue({ createTime: new Date(Date.now() - 3 * 24 * 60 * 60_000).toISOString() }),
-      );
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("Age:      3d ago");
-    });
-
-    test("renders — when createTime is missing", async () => {
-      mockGetIssue.mockResolvedValueOnce(
-        makeIssue({ createTime: undefined }),
-      );
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("Age:      —");
-    });
-
-    test("renders 0 for missing counts", async () => {
-      mockGetIssue.mockResolvedValueOnce(
-        makeIssue({ eventCount: undefined, impactedDevicesCount: undefined }),
-      );
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("Events:   0");
-      expect(out).toContain("Users:    0");
-    });
-  });
-
-  describe("text output — LATEST CRASH", () => {
-    test("renders device info", async () => {
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("LATEST CRASH");
-      expect(out).toContain("Google Pixel 7 (arm64-v8a)");
-    });
-
-    test("renders OS info (uses displayName when available)", async () => {
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("OS:      Android 14");
-    });
-
-    test("renders app version", async () => {
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("Version: 2.1.0 (210)");
-    });
-
-    test("omits crash section when no events", async () => {
-      mockListEvents.mockResolvedValueOnce({ events: [] });
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).not.toContain("LATEST CRASH");
-    });
-  });
-
-  describe("text output — STACK TRACE", () => {
-    test("renders exception type and reason", async () => {
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("STACK TRACE");
       expect(out).toContain(
         "java.lang.NullPointerException: Attempt to invoke virtual method on null object",
       );
     });
 
-    test("renders frames with file and line", async () => {
+    test("marks blamed frame with > prefix", async () => {
       const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("com.app com.app.Main.run (Main.java:42)");
+      expect(out).toContain("> com.app.Main.run (Main.java:42)");
     });
 
-    test("marks blamed frame with > marker", async () => {
+    test("non-blamed frame has space prefix", async () => {
       const out = await runShow({ issueId: "abcdef1234567890" });
-      // Blamed frame should have > marker
-      expect(out).toMatch(/>.*com\.app\.Main\.run/);
+      expect(out).toContain("  android.app.Activity.onCreate (Activity.java:100)");
     });
 
-    test("non-blamed frame has space marker", async () => {
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      // Non-blamed frame should have space
-      const lines = out.split("\n");
-      const platformFrame = lines.find((l) =>
-        l.includes("android.app.Activity.onCreate"),
-      );
-      expect(platformFrame).toBeDefined();
-      expect(platformFrame!.trimStart().startsWith(">")).toBe(false);
-    });
-
-    test("renders multiple exceptions", async () => {
+    test("renders multiple exceptions with separator", async () => {
       mockListEvents.mockResolvedValueOnce({
         events: [
           makeEvent({
@@ -306,25 +230,20 @@ describe("runShow", () => {
       });
       const out = await runShow({ issueId: "abcdef1234567890" });
       expect(out).toContain("java.lang.RuntimeException: Outer");
-      expect(out).toContain("java.lang.NullPointerException: Inner cause");
+      expect(out).toContain("--- java.lang.NullPointerException: Inner cause ---");
     });
 
-    test("omits stack trace section when no exceptions", async () => {
+    test("omits stack trace when no exceptions", async () => {
       mockListEvents.mockResolvedValueOnce({
         events: [makeEvent({ exceptions: [] })],
       });
       const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).not.toContain("STACK TRACE");
-    });
-  });
-
-  describe("text output — BLAME FRAME", () => {
-    test("renders blame frame summary", async () => {
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("BLAME FRAME: com.app.Main.run Main.java:42");
+      const lines = out.split("\n");
+      // Only header lines, no callstack
+      expect(lines.length).toBeLessThanOrEqual(3);
     });
 
-    test("omits blame frame when not present", async () => {
+    test("omits blame when no blameFrame", async () => {
       mockListEvents.mockResolvedValueOnce({
         events: [
           makeEvent({
@@ -333,66 +252,75 @@ describe("runShow", () => {
         ],
       });
       const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).not.toContain("BLAME FRAME");
+      expect(out).not.toContain("Blame:");
+    });
+
+    test("no LATEST CRASH section (removed noise)", async () => {
+      const out = await runShow({ issueId: "abcdef1234567890" });
+      expect(out).not.toContain("LATEST CRASH");
+      expect(out).not.toContain("Device:");
     });
   });
 
   describe("JSON output", () => {
-    test("returns combined issue and latestEvent", async () => {
+    test("returns flat compact structure", async () => {
       const out = await runShow({
         issueId: "abcdef1234567890",
         format: "json",
       });
       const json = JSON.parse(out);
-      expect(json.issue).toBeDefined();
-      expect(json.issue.id).toBe("abcdef1234567890");
-      expect(json.latestEvent).toBeDefined();
-      expect(json.latestEvent.eventId).toBe("ev1");
+      expect(json.id).toBe("abcdef1234567890");
+      expect(json.title).toBe("NullPointerException");
+      expect(json.subtitle).toBe("com.app.Main.run");
+      expect(json.type).toBe("FATAL");
+      expect(json.state).toBe("OPEN");
+      expect(json.uri).toBe("https://console.firebase.google.com/issue/abc");
     });
 
-    test("returns null latestEvent when no events", async () => {
+    test("returns blameFrame as string", async () => {
+      const out = await runShow({
+        issueId: "abcdef1234567890",
+        format: "json",
+      });
+      const json = JSON.parse(out);
+      expect(json.blameFrame).toBe("com.app.Main.run (Main.java:42)");
+    });
+
+    test("returns callstack as string array", async () => {
+      const out = await runShow({
+        issueId: "abcdef1234567890",
+        format: "json",
+      });
+      const json = JSON.parse(out);
+      expect(Array.isArray(json.callstack)).toBe(true);
+      expect(json.callstack[0]).toBe(
+        "java.lang.NullPointerException: Attempt to invoke virtual method on null object",
+      );
+      expect(json.callstack[1]).toBe("> com.app.Main.run (Main.java:42)");
+      expect(json.callstack[2]).toBe("  android.app.Activity.onCreate (Activity.java:100)");
+    });
+
+    test("returns null blameFrame and empty callstack when no events", async () => {
       mockListEvents.mockResolvedValueOnce({ events: [] });
       const out = await runShow({
         issueId: "abcdef1234567890",
         format: "json",
       });
       const json = JSON.parse(out);
-      expect(json.issue).toBeDefined();
-      expect(json.latestEvent).toBeNull();
+      expect(json.blameFrame).toBeNull();
+      expect(json.callstack).toEqual([]);
     });
 
-    test("includes full issue data", async () => {
+    test("does not include raw issue/event objects", async () => {
       const out = await runShow({
         issueId: "abcdef1234567890",
         format: "json",
       });
       const json = JSON.parse(out);
-      expect(json.issue.errorType).toBe("FATAL");
-      expect(json.issue.title).toBe("NullPointerException");
-      expect(json.issue.state).toBe("OPEN");
-    });
-
-    test("includes full event data", async () => {
-      const out = await runShow({
-        issueId: "abcdef1234567890",
-        format: "json",
-      });
-      const json = JSON.parse(out);
-      expect(json.latestEvent.device.model).toBe("Pixel 7");
-      expect(json.latestEvent.exceptions).toHaveLength(1);
-    });
-  });
-
-  describe("sections structure", () => {
-    test("sections separated by double newlines", async () => {
-      const out = await runShow({ issueId: "abcdef1234567890" });
-      expect(out).toContain("ISSUE");
-      expect(out).toContain("LATEST CRASH");
-      expect(out).toContain("STACK TRACE");
-      expect(out).toContain("BLAME FRAME");
-      // Sections separated by \n\n
-      const sections = out.split("\n\n");
-      expect(sections.length).toBeGreaterThanOrEqual(4);
+      expect(json.issue).toBeUndefined();
+      expect(json.latestEvent).toBeUndefined();
+      expect(json.device).toBeUndefined();
+      expect(json.threads).toBeUndefined();
     });
   });
 });

@@ -1,6 +1,6 @@
 import { getIssue, listEvents } from "../api/crashlytics.js";
-import type { Event, Exception, Frame, Issue, EnrichedIssue } from "../api/types.js";
-import { formatAge, formatJson } from "../format.js";
+import type { Exception, Frame, Issue } from "../api/types.js";
+import { formatJson } from "../format.js";
 import { resolveIssueId } from "../resolve-id.js";
 
 export interface ShowArgs {
@@ -8,66 +8,32 @@ export interface ShowArgs {
   format?: string;
 }
 
-function formatIssueHeader(issue: Issue, now: number): string {
-  const lines: string[] = [];
-  lines.push("ISSUE");
-  lines.push(`  ${issue.title}`);
-  lines.push(`  ${issue.subtitle}`);
-  lines.push("");
-
-  const enriched = issue as EnrichedIssue;
-  const age = enriched.createTime ? formatAge(enriched.createTime, now) : "—";
-  const events = enriched.eventCount ?? 0;
-  const users = enriched.impactedDevicesCount ?? 0;
-  const versions = `${issue.firstSeenVersion} → ${issue.lastSeenVersion}`;
-
-  lines.push(`  Type:     ${issue.errorType}`);
-  lines.push(`  State:    ${issue.state}`);
-  lines.push(`  Events:   ${events}`);
-  lines.push(`  Users:    ${users}`);
-  lines.push(`  Versions: ${versions}`);
-  lines.push(`  Age:      ${age}`);
-  lines.push(`  Console:  ${issue.uri}`);
-
-  return lines.join("\n");
+function frameToString(frame: Frame): string {
+  const loc = frame.file && frame.line ? `(${frame.file}:${frame.line})` : `(${frame.library})`;
+  return `${frame.symbol} ${loc}`;
 }
 
-function formatLatestCrash(event: Event): string {
+function buildCallstack(exceptions: Exception[]): string[] {
   const lines: string[] = [];
-  lines.push("LATEST CRASH");
-  lines.push(`  Device:  ${event.device.manufacturer} ${event.device.model} (${event.device.architecture})`);
-  lines.push(`  OS:      ${event.operatingSystem.displayName ?? `${event.operatingSystem.os} ${event.operatingSystem.displayVersion}`}`);
-  lines.push(`  Version: ${event.version.displayVersion} (${event.version.buildVersion})`);
-  return lines.join("\n");
-}
-
-function formatFrame(frame: Frame): string {
-  const marker = frame.blamed ? ">" : " ";
-  const location = frame.file && frame.line ? `(${frame.file}:${frame.line})` : "";
-  return `${marker}   ${frame.library} ${frame.symbol} ${location}`.trimEnd();
-}
-
-function formatStackTrace(exceptions: Exception[]): string {
-  const lines: string[] = [];
-  lines.push("STACK TRACE");
-
-  for (const ex of exceptions) {
-    lines.push(`  ${ex.type}: ${ex.exceptionMessage}`);
+  for (const [i, ex] of exceptions.entries()) {
+    const header = `${ex.type}: ${ex.exceptionMessage}`;
+    lines.push(i > 0 ? `--- ${header} ---` : header);
     for (const frame of ex.frames) {
-      lines.push(`  ${formatFrame(frame)}`);
+      lines.push(`${frame.blamed ? "> " : "  "}${frameToString(frame)}`);
     }
-    lines.push("");
   }
-
-  // Remove trailing empty line
-  if (lines.at(-1) === "") lines.pop();
-
-  return lines.join("\n");
+  return lines;
 }
 
-function formatBlameFrame(frame: Frame): string {
-  const location = frame.file && frame.line ? `${frame.file}:${frame.line}` : frame.library;
-  return `BLAME FRAME: ${frame.symbol} ${location}`;
+function formatText(issue: Issue, callstack: string[], blameFrame: string | null): string {
+  const lines: string[] = [];
+  lines.push(`${issue.title} — ${issue.subtitle}`);
+  lines.push(`${issue.errorType} | ${issue.state} | ${issue.firstSeenVersion}→${issue.lastSeenVersion}`);
+  if (blameFrame) lines.push(`Blame: ${blameFrame}`);
+  if (callstack.length) {
+    lines.push("", ...callstack);
+  }
+  return lines.join("\n");
 }
 
 export async function runShow(args: ShowArgs): Promise<string> {
@@ -82,25 +48,22 @@ export async function runShow(args: ShowArgs): Promise<string> {
   ]);
 
   const latestEvent = eventsResponse.events?.[0];
+  const exceptions = latestEvent?.exceptions?.length ? latestEvent.exceptions : [];
+  const callstack = exceptions.length ? buildCallstack(exceptions) : [];
+  const blameFrame = latestEvent?.blameFrame ? frameToString(latestEvent.blameFrame) : null;
 
   if (args.format === "json") {
-    return formatJson({ issue, latestEvent: latestEvent ?? null });
+    return formatJson({
+      id: issue.id,
+      title: issue.title,
+      subtitle: issue.subtitle,
+      type: issue.errorType,
+      state: issue.state,
+      uri: issue.uri,
+      blameFrame,
+      callstack,
+    });
   }
 
-  const now = Date.now();
-  const sections: string[] = [formatIssueHeader(issue, now)];
-
-  if (latestEvent) {
-    sections.push(formatLatestCrash(latestEvent));
-
-    if (latestEvent.exceptions?.length) {
-      sections.push(formatStackTrace(latestEvent.exceptions));
-    }
-
-    if (latestEvent.blameFrame) {
-      sections.push(formatBlameFrame(latestEvent.blameFrame));
-    }
-  }
-
-  return sections.join("\n\n");
+  return formatText(issue, callstack, blameFrame);
 }
