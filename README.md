@@ -1,101 +1,74 @@
 # crashpull
 
-Zero-dependency TypeScript CLI that pulls crash data from Firebase Crashlytics into your terminal and agentic coding workflows.
+Pull Firebase Crashlytics data into your terminal and agentic coding workflows.
 
-## Project Goal
+## Why
 
-Build a zero-dependency TypeScript CLI tool (`npx crashpull@latest`) that pulls crash/issue data from Firebase Crashlytics v1alpha API. Reuses firebase-tools OAuth tokens for auth. Targets Android apps. Designed to feed crash data into agentic coding workflows (Claude Code, Codex, etc.).
+Crash data lives in the Firebase console. Your coding agent lives in the terminal. **crashpull** bridges the gap — list top crashes, inspect stack traces, and resolve issues without leaving your workflow. Output as human-readable tables or `--format json` for agents.
 
-## What It Does
-
-crashpull reads your existing Firebase CLI login tokens and talks directly to the Crashlytics API — no extra auth setup, no SDK dependencies. List top crashes, inspect stack traces, resolve issues, all from the command line. Output as text tables for humans or JSON for agents.
-
-## Architecture
-
-```
-src/
-├── bin.ts              # Entry point — shebang, argv routing, error handling
-├── args.ts             # parseArgs config per command, routing logic
-├── config.ts           # Read/write .crashpull.json (project+app linking)
-├── format.ts           # Text table + JSON output helpers
-├── commands/
-│   ├── doctor.ts       # Preflight checks (firebase, auth, API, config)
-│   ├── init.ts         # Interactive project/app setup via firebase CLI
-│   ├── list.ts         # Top issues with filtering (type, signal, since)
-│   ├── show.ts         # Issue detail + full stack trace
-│   ├── resolve.ts      # PATCH issue state → CLOSED
-│   └── help.ts         # Plain-text help, per-command, --format json
-└── api/
-    ├── auth.ts         # Read firebase token, refresh via Google OAuth
-    ├── client.ts       # Fetch wrapper: base URL + Bearer + error handling
-    ├── crashlytics.ts  # Typed API calls (topIssues, getIssue, listEvents, etc.)
-    └── types.ts        # Response types (Issue, Event, Frame, Exception, etc.)
-```
-
-**Auth flow:** Reads `~/.config/configstore/firebase-tools.json` → refreshes OAuth token via Google's token endpoint using Firebase CLI's public client credentials → injects Bearer token into Crashlytics API requests.
-
-**Config:** `.crashpull.json` in project root links a Firebase project number and Android app ID. Created by `crashpull init`.
-
-## Components
-
-| Module | Purpose |
-|--------|---------|
-| `api/auth` | Firebase token refresh, error messages for missing/expired auth |
-| `api/client` | Generic GET/PATCH wrapper for Crashlytics v1alpha API |
-| `api/crashlytics` | Typed functions: topIssues, getIssue, listEvents, updateIssue |
-| `api/types` | TypeScript interfaces for all API responses |
-| `config` | Read/write `.crashpull.json` project config |
-| `format` | Text table rendering, relative time formatting, JSON output |
-| `args` | Command routing and flag parsing via `node:util parseArgs` |
-| `commands/*` | One file per command: doctor, init, list, show, resolve, help |
-
-## Technology Stack
-
-- **TypeScript 7** — strict mode, ES2022 target, NodeNext modules
-- **Node 18+** — only built-ins (`parseArgs`, `fetch`, `fs`, `os`, `path`)
-- **tsup** — bundle to single `dist/bin.js`
-- **oxlint / oxfmt** — linting and formatting
-- **bun test** — test runner
-- **Zero runtime dependencies**
-
-## Getting Started
+## Install
 
 ```sh
-# Check your setup
-npx crashpull@latest doctor
-
-# Link a Firebase project and Android app
-npx crashpull@latest init
-
-# List top crashes (last 30 days)
-npx crashpull@latest list
-
-# Inspect a specific crash
-npx crashpull@latest show a1b2c3d4
-
-# Resolve an issue
-npx crashpull@latest resolve a1b2c3d4
+npx crashpull@latest
 ```
 
-### Agentic Usage
+Requires Node 18+. Zero runtime dependencies. Uses your existing Firebase CLI login — no extra auth setup.
+
+## Quick Start
+
+```sh
+# 1. Check prerequisites (firebase CLI, auth, API access)
+npx crashpull doctor
+
+# 2. Link a Firebase project and Android app
+npx crashpull init
+
+# 3. List top crashes (last 30 days)
+npx crashpull list
+
+# 4. Inspect a specific crash with full stack trace
+npx crashpull show a1b2c3d4
+
+# 5. Resolve an issue
+npx crashpull resolve a1b2c3d4
+```
+
+## Agentic Workflow
 
 All commands support `--format json` for machine-readable output:
 
 ```sh
-# Feed crash data into an agent's context
-npx crashpull@latest list --type fatal --since 7d --format json
+# Top fatal crashes from the last 7 days
+npx crashpull list --type fatal --since 7d --format json
 
-# Get full stack trace as JSON
-npx crashpull@latest show a1b2c3d4 --format json
+# Full stack trace as JSON
+npx crashpull show a1b2c3d4 --format json
+
+# Pipe into your agent's context
+npx crashpull list --format json | claude -p "Which crash should we fix first?"
 ```
 
-Add to your project's `CLAUDE.md`:
+### CLAUDE.md Integration
 
-```
+Add this to your project's `CLAUDE.md` to give your agent access to crash data:
+
+```markdown
 # Crash data
-Run `npx crashpull@latest list --format json` to see current crashes.
-Run `npx crashpull@latest show <id> --format json` for stack traces.
+- Run `npx crashpull list --format json` to see current top crashes
+- Run `npx crashpull show <id> --format json` to get full stack trace
+- Run `npx crashpull resolve <id>` after fixing a crash
 ```
+
+## Commands
+
+| Command   | Description                                      |
+|-----------|--------------------------------------------------|
+| `doctor`  | Preflight checks — firebase CLI, auth, API, config |
+| `init`    | Interactive setup — links Firebase project + app |
+| `list`    | Top issues with `--type`, `--signal`, `--since`, `--limit` filters |
+| `show`    | Issue detail + full stack trace                  |
+| `resolve` | Mark an issue as resolved                        |
+| `help`    | Usage info (also supports `--format json`)       |
 
 ## License
 
