@@ -1,4 +1,4 @@
-import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
+import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { join } from "node:path";
 
 const mockReadFile = mock(() => Promise.resolve(""));
