@@ -1,0 +1,25 @@
+{
+  "name": "crashpull",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": "./dist/bin.js",
+  "files": ["dist"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup src/bin.ts --format esm --target node18 --clean",
+    "lint": "oxlint src/",
+    "dev": "tsx src/bin.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "oxlint": "^0.16.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.8.0"
+  },
+  "license": "MIT",
+  "author": "DreamTeamMobile",
+  "description": "Zero-dependency CLI that pulls crash data from Firebase Crashlytics into your terminal and agentic coding workflows"
+}
