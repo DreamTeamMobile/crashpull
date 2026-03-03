@@ -7,10 +7,10 @@ import type {
   TopIssuesResponse,
 } from "./types.js";
 
-const SINCE_MAP: Record<string, string> = {
-  "7d": "filter.eventTimestamp>=168",
-  "30d": "filter.eventTimestamp>=720",
-  "90d": "filter.eventTimestamp>=2160",
+const SINCE_MAP: Record<string, [string, string]> = {
+  "7d": ["filter.eventTimestamp>=", "168"],
+  "30d": ["filter.eventTimestamp>=", "720"],
+  "90d": ["filter.eventTimestamp>=", "2160"],
 };
 
 export interface TopIssuesOpts {
@@ -27,24 +27,17 @@ export function getTopIssues(opts: TopIssuesOpts = {}) {
     params.pageSize = String(opts.pageSize);
   }
 
-  const filters: string[] = [];
-
   if (opts.errorTypes?.length) {
-    filters.push(
-      `filter.errorTypes=${opts.errorTypes.join(",")}`,
-    );
+    params["filter.errorTypes"] = opts.errorTypes.join(",");
   }
 
   if (opts.signals?.length) {
-    filters.push(`filter.signals=${opts.signals.join(",")}`);
+    params["filter.signals"] = opts.signals.join(",");
   }
 
   if (opts.since && SINCE_MAP[opts.since]) {
-    filters.push(SINCE_MAP[opts.since]);
-  }
-
-  if (filters.length) {
-    params.filter = filters.join(" ");
+    const [key, value] = SINCE_MAP[opts.since];
+    params[key] = value;
   }
 
   return apiGet<TopIssuesResponse>("reports/topIssues", params);

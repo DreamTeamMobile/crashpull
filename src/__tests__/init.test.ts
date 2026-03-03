@@ -105,6 +105,35 @@ describe("runInit", () => {
     });
   });
 
+  describe("deduplicates apps by appId", () => {
+    test("duplicate appIds are shown only once", async () => {
+      const dupeApps = [
+        { appId: "1:111:android:aaa", displayName: "Smart NoteTaking", platform: "ANDROID" },
+        { appId: "1:111:android:aaa", displayName: "Smart NoteTaking", platform: "ANDROID" },
+        { appId: "1:111:android:aaa", displayName: "Smart NoteTaking", platform: "ANDROID" },
+      ];
+      const prompts: string[] = [];
+      const io = defaultIO({
+        execFile: makeExecFile({
+          "projects:list": { result: PROJECTS },
+          "apps:list": { result: dupeApps },
+        }),
+        createReadlineInterface: () => ({
+          question: (prompt: string, cb: (answer: string) => void) => {
+            prompts.push(prompt);
+            cb(prompts.length === 1 ? "1" : "1");
+          },
+          close: () => {},
+        }),
+      });
+      await runInit(io);
+      // App prompt should show only 1 entry, not 3
+      const appPrompt = prompts[1];
+      expect(appPrompt).toContain("1) Smart NoteTaking");
+      expect(appPrompt).not.toContain("2)");
+    });
+  });
+
   describe("filters to Android only", () => {
     test("iOS-only project throws no Android apps error", async () => {
       const io = defaultIO({

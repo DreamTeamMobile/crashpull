@@ -118,8 +118,13 @@ export async function runInit(io: InitIO = defaultIO): Promise<string> {
     throw new Error(`Could not list apps for project ${project.projectId}`);
   }
 
-  // Filter to Android apps only
-  const androidApps = apps.filter((a) => a.platform === "ANDROID");
+  // Filter to Android apps only and deduplicate by appId
+  const seen = new Set<string>();
+  const androidApps = apps.filter((a) => {
+    if (a.platform !== "ANDROID" || seen.has(a.appId)) return false;
+    seen.add(a.appId);
+    return true;
+  });
   if (androidApps.length === 0) {
     throw new Error(
       `No Android apps found in project ${project.displayName}. Add one in Firebase Console.`,

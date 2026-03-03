@@ -31,42 +31,42 @@ describe("getTopIssues", () => {
     expect(params.pageSize).toBe("25");
   });
 
-  test("passes errorTypes as filter", async () => {
+  test("passes errorTypes as separate query param", async () => {
     await getTopIssues({ errorTypes: ["FATAL", "ANR"] });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.filter).toContain("filter.errorTypes=FATAL,ANR");
+    expect(params["filter.errorTypes"]).toBe("FATAL,ANR");
   });
 
-  test("passes signals as filter", async () => {
+  test("passes signals as separate query param", async () => {
     await getTopIssues({ signals: ["SIGABRT", "SIGSEGV"] });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.filter).toContain("filter.signals=SIGABRT,SIGSEGV");
+    expect(params["filter.signals"]).toBe("SIGABRT,SIGSEGV");
   });
 
-  test("maps since=7d to filter param", async () => {
+  test("maps since=7d to query param", async () => {
     await getTopIssues({ since: "7d" });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.filter).toContain("filter.eventTimestamp>=168");
+    expect(params["filter.eventTimestamp>="]).toBe("168");
   });
 
-  test("maps since=30d to filter param", async () => {
+  test("maps since=30d to query param", async () => {
     await getTopIssues({ since: "30d" });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.filter).toContain("filter.eventTimestamp>=720");
+    expect(params["filter.eventTimestamp>="]).toBe("720");
   });
 
-  test("maps since=90d to filter param", async () => {
+  test("maps since=90d to query param", async () => {
     await getTopIssues({ since: "90d" });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.filter).toContain("filter.eventTimestamp>=2160");
+    expect(params["filter.eventTimestamp>="]).toBe("2160");
   });
 
-  test("combines multiple filters with space", async () => {
+  test("combines multiple filters as separate query params", async () => {
     await getTopIssues({ errorTypes: ["FATAL"], since: "7d" });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.filter).toBe(
-      "filter.errorTypes=FATAL filter.eventTimestamp>=168",
-    );
+    expect(params["filter.errorTypes"]).toBe("FATAL");
+    expect(params["filter.eventTimestamp>="]).toBe("168");
+    expect(params.filter).toBeUndefined();
   });
 
   test("returns API response", async () => {
