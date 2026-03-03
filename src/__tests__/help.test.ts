@@ -53,7 +53,7 @@ describe("runHelp", () => {
 
     test("list command shows defaults", () => {
       const out = runHelp({ topic: "list" });
-      expect(out).toContain("(default: 7d)");
+      expect(out).toContain("(default: 30d)");
       expect(out).toContain("(default: 10)");
     });
 
@@ -126,7 +126,7 @@ describe("runHelp", () => {
       const out = runHelp({ topic: "list", format: "json" });
       const json = JSON.parse(out);
       const sinceFlag = json.flags.find((f: { flag: string }) => f.flag.includes("--since"));
-      expect(sinceFlag.default).toBe("7d");
+      expect(sinceFlag.default).toBe("30d");
     });
 
     test("JSON for command with no specific flags still has global flags", () => {

@@ -39,7 +39,7 @@ const COMMANDS: CommandDef[] = [
     flags: [
       { flag: "--type <fatal|non-fatal|anr>", description: "Error type filter" },
       { flag: "--signal <fresh|regressed|repetitive>", description: "Signal filter" },
-      { flag: "--since <7d|30d|90d>", description: "Time window", default: "7d" },
+      { flag: "--since <7d|30d|90d>", description: "Time window", default: "30d" },
       { flag: "--limit <n>", description: "Max results", default: "10" },
     ],
     examples: [
