@@ -7,9 +7,14 @@ import { runInit } from "./commands/init.js";
 import { runList } from "./commands/list.js";
 import { runResolve } from "./commands/resolve.js";
 import { runShow } from "./commands/show.js";
+import { runLlm } from "./commands/llm.js";
 
 async function main(): Promise<void> {
-  const { command, args } = route(process.argv.slice(2));
+  const { command, args, _unknown } = route(process.argv.slice(2));
+
+  if (_unknown?.length) {
+    console.error(`Warning: unknown option(s) ignored: ${_unknown.join(", ")}`);
+  }
 
   let output: string;
   switch (command) {
@@ -34,6 +39,9 @@ async function main(): Promise<void> {
       break;
     case "show":
       output = await runShow(args);
+      break;
+    case "llm":
+      output = runLlm();
       break;
   }
 

@@ -12,7 +12,7 @@ export interface ListArgs {
 }
 
 const COLUMNS: Column[] = [
-  { key: "id", label: "ID", width: 8 },
+  { key: "id", label: "ID", width: 16 },
   { key: "type", label: "TYPE", width: 9 },
   { key: "events", label: "EVENTS", width: 7, align: "right" },
   { key: "users", label: "USERS", width: 6, align: "right" },
@@ -54,7 +54,7 @@ function isFresh(issue: EnrichedIssue, now: number): boolean {
 
 function toRow(issue: EnrichedIssue, now: number) {
   return {
-    id: issue.id.slice(0, 8),
+    id: issue.id,
     type: issue.errorType,
     events: String(issue.eventCount ?? 0),
     users: String(issue.impactedDevicesCount ?? 0),

@@ -12,7 +12,7 @@ describe("runHelp", () => {
     test("includes COMMANDS section with all commands", () => {
       const out = runHelp({});
       expect(out).toContain("COMMANDS");
-      for (const cmd of ["doctor", "init", "list", "show", "resolve", "help"]) {
+      for (const cmd of ["doctor", "init", "list", "show", "resolve", "help", "llm"]) {
         expect(out).toContain(cmd);
       }
     });
@@ -90,7 +90,7 @@ describe("runHelp", () => {
       const json = JSON.parse(out);
       expect(json.usage).toBe("crashpull <command> [options]");
       expect(json.commands).toBeArray();
-      expect(json.commands.length).toBe(6);
+      expect(json.commands.length).toBe(7);
       expect(json.globalOptions).toBeArray();
     });
 

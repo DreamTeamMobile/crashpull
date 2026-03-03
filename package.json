@@ -1,6 +1,6 @@
 {
   "name": "crashpull",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "type": "module",
   "bin": "./dist/bin.js",
   "files": [
@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "js-tiktoken": "^1.0.21",
     "oxlint": "^0.16.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",

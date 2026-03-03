@@ -75,6 +75,13 @@ const COMMANDS: CommandDef[] = [
     flags: [],
     examples: [`${BIN} help`, `${BIN} help list`],
   },
+  {
+    name: "llm",
+    summary: "Print compact guide for LLM/agent consumption",
+    usage: `${BIN} llm`,
+    flags: [],
+    examples: [`${BIN} llm`],
+  },
 ];
 
 const COMMAND_MAP = new Map(COMMANDS.map((c) => [c.name, c]));
@@ -100,6 +107,10 @@ function topLevelText(): string {
   lines.push(`  ${BIN} doctor`);
   lines.push(`  ${BIN} list --type fatal --since 30d`);
   lines.push(`  ${BIN} show a1b2c3d4 --format json`);
+  lines.push("");
+  lines.push("FOR LLMs/AGENTS");
+  lines.push(`  Run "${BIN} llm" to get a compact system-prompt-style guide.`);
+  lines.push(`  All commands support --format json for machine-readable output.`);
   return lines.join("\n");
 }
 

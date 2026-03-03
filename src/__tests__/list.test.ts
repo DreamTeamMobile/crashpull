@@ -110,13 +110,12 @@ describe("runList", () => {
       expect(out).toContain("TITLE");
     });
 
-    test("renders issue ID first 8 chars", async () => {
+    test("renders full issue ID", async () => {
       mockGetTopIssues.mockResolvedValueOnce({
         issues: [makeIssue({ id: "abcdef1234567890" })],
       });
       const out = await runList({});
-      expect(out).toContain("abcdef12");
-      expect(out).not.toContain("abcdef1234567890");
+      expect(out).toContain("abcdef1234567890");
     });
 
     test("renders error type", async () => {

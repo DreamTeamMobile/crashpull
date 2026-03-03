@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r '.tool_input.command // \"\"'); case \"$CMD\" in *git\\ commit*|*git\\ push*) CHANGED=$(git diff --cached --name-only 2>/dev/null || git diff --name-only HEAD 2>/dev/null); if echo \"$CHANGED\" | grep -qE 'src/(commands/|args\\.ts|bin\\.ts|format\\.ts)'; then echo 'REMINDER: CLI surface changed — review src/commands/llm.ts and run: bun test src/__tests__/llm.test.ts' >&2; fi; exit 0 ;; *) exit 0 ;; esac"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 
-export type Command = "doctor" | "init" | "list" | "show" | "resolve" | "help";
+export type Command = "doctor" | "init" | "list" | "show" | "resolve" | "help" | "llm";
 
 const COMMANDS = new Set<Command>([
   "doctor",
@@ -9,11 +9,13 @@ const COMMANDS = new Set<Command>([
   "show",
   "resolve",
   "help",
+  "llm",
 ]);
 
 export interface RouteResult {
   command: Command;
   args: Record<string, unknown>;
+  _unknown?: string[];
 }
 
 const globalOptions = {
@@ -45,6 +47,7 @@ function parseList(argv: string[]) {
     args: argv,
     options: listOptions,
     allowPositionals: true,
+    strict: false,
   });
 }
 
@@ -53,7 +56,16 @@ function parseWithPositional(argv: string[]) {
     args: argv,
     options: globalOptions,
     allowPositionals: true,
+    strict: false,
   });
+}
+
+function detectUnknown(argv: string[], knownOptions: Record<string, unknown>): string[] {
+  const known = new Set(Object.keys(knownOptions));
+  return argv
+    .filter((a) => a.startsWith("--"))
+    .map((a) => a.split("=")[0])
+    .filter((flag) => !known.has(flag.slice(2)));
 }
 
 export function route(argv: string[]): RouteResult {
@@ -89,6 +101,7 @@ export function route(argv: string[]): RouteResult {
   switch (command) {
     case "list": {
       const { values } = parseList(commandArgv);
+      const unknown = detectUnknown(commandArgv, listOptions);
       return {
         command,
         args: {
@@ -100,12 +113,14 @@ export function route(argv: string[]): RouteResult {
           since: values.since,
           limit: values.limit ? Number(values.limit) : undefined,
         },
+        _unknown: unknown.length ? unknown : undefined,
       };
     }
 
     case "show":
     case "resolve": {
       const { values, positionals: pos } = parseWithPositional(commandArgv);
+      const unknown = detectUnknown(commandArgv, globalOptions);
       return {
         command,
         args: {
@@ -114,6 +129,7 @@ export function route(argv: string[]): RouteResult {
           app: values.app,
           issueId: pos[0],
         },
+        _unknown: unknown.length ? unknown : undefined,
       };
     }
 
@@ -126,8 +142,9 @@ export function route(argv: string[]): RouteResult {
     }
 
     default: {
-      // doctor, init — global options only
+      // doctor, init, llm — global options only
       const { values } = parseWithPositional(commandArgv);
+      const unknown = detectUnknown(commandArgv, globalOptions);
       return {
         command,
         args: {
@@ -135,6 +152,7 @@ export function route(argv: string[]): RouteResult {
           project: values.project,
           app: values.app,
         },
+        _unknown: unknown.length ? unknown : undefined,
       };
     }
   }

@@ -2,7 +2,7 @@ import { getTopIssues } from "./api/crashlytics.js";
 
 export async function resolveIssueId(idArg: string): Promise<string> {
   // Full ID — use as-is
-  if (idArg.length > 8) return idArg;
+  if (idArg.length > 12) return idArg;
 
   // Short prefix — search top issues for a match
   const response = await getTopIssues({ pageSize: 100 });

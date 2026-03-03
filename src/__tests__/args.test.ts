@@ -158,6 +158,36 @@ describe("route", () => {
     });
   });
 
+  describe("unknown flags", () => {
+    test("unknown flags don't throw on list", () => {
+      const result = route(["list", "--bogus"]);
+      expect(result.command).toBe("list");
+      expect(result._unknown).toEqual(["--bogus"]);
+    });
+
+    test("unknown flags don't throw on show", () => {
+      const result = route(["show", "abc", "--verbose"]);
+      expect(result.command).toBe("show");
+      expect(result._unknown).toEqual(["--verbose"]);
+    });
+
+    test("multiple unknown flags collected", () => {
+      const result = route(["list", "--foo", "--bar"]);
+      expect(result._unknown).toEqual(["--foo", "--bar"]);
+    });
+
+    test("no unknown flags → _unknown is undefined", () => {
+      const result = route(["list", "--format", "json"]);
+      expect(result._unknown).toBeUndefined();
+    });
+
+    test("unknown flags on doctor", () => {
+      const result = route(["doctor", "--verbose"]);
+      expect(result.command).toBe("doctor");
+      expect(result._unknown).toEqual(["--verbose"]);
+    });
+  });
+
   describe("show/resolve positional", () => {
     test("show captures issue id", () => {
       const result = route(["show", "issue-xyz"]);

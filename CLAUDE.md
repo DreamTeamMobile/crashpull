@@ -53,6 +53,11 @@ src/
 - Commands use dependency injection for testability (`DoctorIO`, `InitIO`)
 - Tests in `src/__tests__/*.test.ts`, run with `bun test`
 
+# Post-change checks
+
+- When CLI surface changes (commands, args, flags, output format), review and update `src/commands/llm.ts` to keep the agent guide accurate. The hook in `.claude/settings.json` reminds on commit/push when relevant files changed.
+- Run `bun test src/__tests__/llm.test.ts` to verify the guide stays under the 270-token budget (cl100k_base).
+
 # Gotchas
 
 - Uses Firebase Crashlytics **v1alpha** API — may change without notice
