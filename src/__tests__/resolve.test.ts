@@ -31,9 +31,6 @@ function makeIssue(overrides: Partial<Issue> = {}): Issue {
     signals: [],
     name: "projects/123/issues/abc",
     variants: [],
-    eventCount: 42,
-    impactedDevicesCount: 15,
-    createTime: "2025-01-15T10:00:00Z",
     ...overrides,
   };
 }

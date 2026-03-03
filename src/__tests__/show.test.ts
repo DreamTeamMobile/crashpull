@@ -1,12 +1,12 @@
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 import type {
+  EnrichedIssue,
   Event,
-  Issue,
   ListEventsResponse,
   TopIssuesResponse,
 } from "../api/types.js";
 
-const mockGetIssue = mock(() => Promise.resolve({} as Issue));
+const mockGetIssue = mock(() => Promise.resolve({} as EnrichedIssue));
 const mockGetTopIssues = mock(() =>
   Promise.resolve({ issues: [] } as TopIssuesResponse),
 );
@@ -24,7 +24,7 @@ const { runShow } = await import("../commands/show.js");
 
 // --- Fixtures ---
 
-function makeIssue(overrides: Partial<Issue> = {}): Issue {
+function makeIssue(overrides: Partial<EnrichedIssue> = {}): EnrichedIssue {
   return {
     id: "abcdef1234567890",
     title: "NullPointerException",
@@ -58,15 +58,16 @@ function makeEvent(overrides: Partial<Event> = {}): Event {
     },
     operatingSystem: {
       displayVersion: "14",
-      name: "Android",
+      os: "Android",
       type: "ANDROID",
+      displayName: "Android 14",
     },
     version: {
       displayVersion: "2.1.0",
       buildVersion: "210",
     },
     blameFrame: {
-      line: 42,
+      line: "42",
       file: "Main.java",
       symbol: "com.app.Main.run",
       library: "com.app",
@@ -76,10 +77,10 @@ function makeEvent(overrides: Partial<Event> = {}): Event {
     exceptions: [
       {
         type: "java.lang.NullPointerException",
-        reason: "Attempt to invoke virtual method on null object",
+        exceptionMessage: "Attempt to invoke virtual method on null object",
         frames: [
           {
-            line: 42,
+            line: "42",
             file: "Main.java",
             symbol: "com.app.Main.run",
             library: "com.app",
@@ -87,19 +88,18 @@ function makeEvent(overrides: Partial<Event> = {}): Event {
             blamed: true,
           },
           {
-            line: 100,
+            line: "100",
             file: "Activity.java",
             symbol: "android.app.Activity.onCreate",
             library: "android.app",
             owner: "PLATFORM",
-            blamed: false,
           },
         ],
         rawStackTrace: "at com.app.Main.run(Main.java:42)",
       },
     ],
     threads: [],
-    memory: { used: 100_000, free: 50_000 },
+    memory: { used: "100000", free: "50000" },
     customKeys: [],
     logs: "",
     ...overrides,
@@ -235,7 +235,7 @@ describe("runShow", () => {
       expect(out).toContain("Google Pixel 7 (arm64-v8a)");
     });
 
-    test("renders OS info", async () => {
+    test("renders OS info (uses displayName when available)", async () => {
       const out = await runShow({ issueId: "abcdef1234567890" });
       expect(out).toContain("OS:      Android 14");
     });
@@ -290,13 +290,13 @@ describe("runShow", () => {
             exceptions: [
               {
                 type: "java.lang.RuntimeException",
-                reason: "Outer",
+                exceptionMessage: "Outer",
                 frames: [],
                 rawStackTrace: "",
               },
               {
                 type: "java.lang.NullPointerException",
-                reason: "Inner cause",
+                exceptionMessage: "Inner cause",
                 frames: [],
                 rawStackTrace: "",
               },

@@ -1,0 +1,112 @@
+{
+  "name": "projects/123456789/events/66a1b2c3d4e5f67890abcde0",
+  "platform": "android",
+  "eventId": "66a1b2c3d4e5f67890abcde0",
+  "eventTime": "2025-06-07T14:32:10.000Z",
+  "device": {
+    "model": "Pixel 7",
+    "manufacturer": "Google",
+    "architecture": "arm64-v8a",
+    "displayName": "Pixel 7",
+    "marketingName": "Pixel 7",
+    "companyName": "Google",
+    "formFactor": "PHONE"
+  },
+  "operatingSystem": {
+    "displayVersion": "14",
+    "os": "Android",
+    "type": "ANDROID",
+    "modificationState": "STOCK",
+    "deviceType": "MOBILE",
+    "displayName": "Android 14"
+  },
+  "version": {
+    "displayVersion": "1.2.3",
+    "buildVersion": "45"
+  },
+  "blameFrame": {
+    "line": "42",
+    "file": "MainActivity.java",
+    "symbol": "com.example.app.MainActivity.onCreate",
+    "library": "com.example.app",
+    "owner": "DEVELOPER",
+    "blamed": true,
+    "offset": "0x1a"
+  },
+  "exceptions": [
+    {
+      "type": "java.lang.NullPointerException",
+      "exceptionMessage": "Attempt to invoke virtual method 'void android.widget.TextView.setText()' on a null object reference",
+      "title": "NullPointerException",
+      "subtitle": "com.example.app.MainActivity.onCreate",
+      "blamed": true,
+      "frames": [
+        {
+          "line": "42",
+          "file": "MainActivity.java",
+          "symbol": "com.example.app.MainActivity.onCreate",
+          "library": "com.example.app",
+          "owner": "DEVELOPER",
+          "blamed": true,
+          "offset": "0x1a"
+        },
+        {
+          "line": "1234",
+          "file": "Activity.java",
+          "symbol": "android.app.Activity.performCreate",
+          "library": "android.app",
+          "owner": "PLATFORM"
+        },
+        {
+          "line": "892",
+          "file": "Instrumentation.java",
+          "symbol": "android.app.Instrumentation.callActivityOnCreate",
+          "library": "android.app",
+          "owner": "PLATFORM"
+        }
+      ],
+      "rawStackTrace": "java.lang.NullPointerException: Attempt to invoke virtual method 'void android.widget.TextView.setText()' on a null object reference\n\tat com.example.app.MainActivity.onCreate(MainActivity.java:42)\n\tat android.app.Activity.performCreate(Activity.java:1234)"
+    }
+  ],
+  "threads": [
+    {
+      "name": "main",
+      "title": "main thread",
+      "frames": [
+        {
+          "line": "42",
+          "file": "MainActivity.java",
+          "symbol": "com.example.app.MainActivity.onCreate",
+          "library": "com.example.app",
+          "owner": "DEVELOPER",
+          "blamed": true
+        }
+      ],
+      "crashed": true
+    }
+  ],
+  "memory": {
+    "used": "524288000",
+    "free": "262144000"
+  },
+  "customKeys": [
+    {
+      "key": "user_tier",
+      "value": "premium"
+    }
+  ],
+  "logs": "06-07 14:32:09.100  I/App: Starting activity\n06-07 14:32:09.200  D/App: Loading layout",
+  "bundleOrPackage": "com.example.app",
+  "receivedTime": "2025-06-07T14:32:15.000Z",
+  "issue": "projects/123456789/issues/66a1b2c3d4e5f67890abcdef",
+  "installationUuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "crashlyticsSdkVersion": "18.6.1",
+  "appOrientation": "PORTRAIT",
+  "deviceOrientation": "PORTRAIT",
+  "storage": {
+    "used": "32000000000",
+    "free": "96000000000"
+  },
+  "processState": "FOREGROUND",
+  "issueVariant": "variant001"
+}

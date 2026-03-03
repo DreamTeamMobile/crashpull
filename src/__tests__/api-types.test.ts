@@ -40,9 +40,9 @@ describe("API types", () => {
       uri: "projects/p/issues/abc123",
       firstSeenVersion: "1.0.0",
       lastSeenVersion: "1.2.0",
-      signals: [{ signal: "SIGABRT", code: "6" }],
+      signals: [{ signal: "SIGABRT", description: "Abort signal" }],
       name: "projects/p/issues/abc123",
-      variants: [{ id: "v1", title: "Variant 1", subtitle: "sub" }],
+      variants: [{ id: "v1", sampleEvent: "ev1", uri: "https://example.com/v1" }],
     };
     expect(issue.id).toBe("abc123");
     expect(issue.errorType).toBe("FATAL");
@@ -57,17 +57,17 @@ describe("API types", () => {
       eventId: "e123",
       eventTime: "2025-01-01T00:00:00Z",
       device: { model: "Pixel 6", manufacturer: "Google", architecture: "arm64" },
-      operatingSystem: { displayVersion: "13", name: "Android", type: "ANDROID" },
+      operatingSystem: { displayVersion: "13", os: "Android", type: "ANDROID" },
       version: { displayVersion: "1.0.0", buildVersion: "100" },
-      blameFrame: { line: 42, file: "App.java", symbol: "main", library: "app", owner: "DEVELOPER", blamed: true },
+      blameFrame: { line: "42", file: "App.java", symbol: "main", library: "app", owner: "DEVELOPER", blamed: true },
       exceptions: [{
         type: "NullPointerException",
-        reason: "null ref",
+        exceptionMessage: "null ref",
         frames: [],
         rawStackTrace: "...",
       }],
       threads: [{ name: "main", frames: [], crashed: true }],
-      memory: { used: 1024, free: 512 },
+      memory: { used: "1024", free: "512" },
       customKeys: [{ key: "userId", value: "u1" }],
       logs: "log output",
     };
@@ -78,7 +78,7 @@ describe("API types", () => {
 
   test("Frame has expected shape", () => {
     const frame: Frame = {
-      line: 10,
+      line: "10",
       file: "main.kt",
       symbol: "onCreate",
       library: "app",

@@ -1,5 +1,6 @@
 import { apiGet, apiPatch } from "./client.js";
 import type {
+  EnrichedIssue,
   ErrorType,
   Issue,
   IssueState,
@@ -50,7 +51,7 @@ export async function getTopIssues(opts: TopIssuesOpts = {}) {
   }
 
   const raw = await apiGet<TopIssuesRawResponse>("reports/topIssues", params);
-  const issues: Issue[] = (raw.groups ?? []).map((g) => {
+  const issues: EnrichedIssue[] = (raw.groups ?? []).map((g) => {
     const m = g.metrics?.[0];
     return {
       ...g.issue,

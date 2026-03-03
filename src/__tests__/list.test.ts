@@ -1,5 +1,5 @@
 import { describe, expect, test, mock, beforeEach } from "bun:test";
-import type { Issue, TopIssuesResponse } from "../api/types.js";
+import type { EnrichedIssue, TopIssuesResponse } from "../api/types.js";
 
 const mockGetTopIssues = mock(() =>
   Promise.resolve({ issues: [] } as TopIssuesResponse),
@@ -20,7 +20,7 @@ beforeEach(() => {
 
 const TEN_DAYS_AGO = new Date(Date.now() - 10 * 24 * 60 * 60_000).toISOString();
 
-function makeIssue(overrides: Partial<Issue> = {}): Issue {
+function makeIssue(overrides: Partial<EnrichedIssue> = {}): EnrichedIssue {
   return {
     id: "abcdef1234567890",
     title: "NullPointerException",

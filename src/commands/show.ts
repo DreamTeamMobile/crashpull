@@ -1,5 +1,5 @@
 import { getIssue, listEvents } from "../api/crashlytics.js";
-import type { Event, Exception, Frame, Issue } from "../api/types.js";
+import type { Event, Exception, Frame, Issue, EnrichedIssue } from "../api/types.js";
 import { formatAge, formatJson } from "../format.js";
 import { resolveIssueId } from "../resolve-id.js";
 
@@ -15,9 +15,10 @@ function formatIssueHeader(issue: Issue, now: number): string {
   lines.push(`  ${issue.subtitle}`);
   lines.push("");
 
-  const age = issue.createTime ? formatAge(issue.createTime, now) : "—";
-  const events = issue.eventCount ?? 0;
-  const users = issue.impactedDevicesCount ?? 0;
+  const enriched = issue as EnrichedIssue;
+  const age = enriched.createTime ? formatAge(enriched.createTime, now) : "—";
+  const events = enriched.eventCount ?? 0;
+  const users = enriched.impactedDevicesCount ?? 0;
   const versions = `${issue.firstSeenVersion} → ${issue.lastSeenVersion}`;
 
   lines.push(`  Type:     ${issue.errorType}`);
@@ -35,7 +36,7 @@ function formatLatestCrash(event: Event): string {
   const lines: string[] = [];
   lines.push("LATEST CRASH");
   lines.push(`  Device:  ${event.device.manufacturer} ${event.device.model} (${event.device.architecture})`);
-  lines.push(`  OS:      ${event.operatingSystem.name} ${event.operatingSystem.displayVersion}`);
+  lines.push(`  OS:      ${event.operatingSystem.displayName ?? `${event.operatingSystem.os} ${event.operatingSystem.displayVersion}`}`);
   lines.push(`  Version: ${event.version.displayVersion} (${event.version.buildVersion})`);
   return lines.join("\n");
 }
@@ -51,7 +52,7 @@ function formatStackTrace(exceptions: Exception[]): string {
   lines.push("STACK TRACE");
 
   for (const ex of exceptions) {
-    lines.push(`  ${ex.type}: ${ex.reason}`);
+    lines.push(`  ${ex.type}: ${ex.exceptionMessage}`);
     for (const frame of ex.frames) {
       lines.push(`  ${formatFrame(frame)}`);
     }

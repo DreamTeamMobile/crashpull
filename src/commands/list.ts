@@ -1,5 +1,5 @@
 import { getTopIssues } from "../api/crashlytics.js";
-import type { ErrorType, Issue } from "../api/types.js";
+import type { EnrichedIssue, ErrorType } from "../api/types.js";
 import { formatAge, formatJson, textTable } from "../format.js";
 import type { Column } from "../format.js";
 
@@ -47,12 +47,12 @@ function mapSignal(signal?: string): string[] | undefined {
   return mapped ? [mapped] : undefined;
 }
 
-function isFresh(issue: Issue, now: number): boolean {
+function isFresh(issue: EnrichedIssue, now: number): boolean {
   if (!issue.createTime) return false;
   return now - new Date(issue.createTime).getTime() < FRESH_THRESHOLD_MS;
 }
 
-function toRow(issue: Issue, now: number) {
+function toRow(issue: EnrichedIssue, now: number) {
   return {
     id: issue.id.slice(0, 8),
     type: issue.errorType,

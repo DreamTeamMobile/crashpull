@@ -6,15 +6,13 @@ export type FrameOwner = "DEVELOPER" | "VENDOR" | "SYSTEM" | "PLATFORM" | "RUNTI
 
 export interface Signal {
   signal: string;
-  code?: string;
   description?: string;
 }
 
 export interface Variant {
   id: string;
-  title: string;
-  subtitle: string;
   sampleEvent?: string;
+  uri?: string;
 }
 
 export interface Issue {
@@ -30,29 +28,39 @@ export interface Issue {
   signals: Signal[];
   name: string;
   variants: Variant[];
+}
+
+/** Issue enriched with metrics from topIssues response */
+export interface EnrichedIssue extends Issue {
   eventCount?: number;
   impactedDevicesCount?: number;
   createTime?: string;
 }
 
 export interface Frame {
-  line: number;
+  line: string;
   file: string;
   symbol: string;
   library: string;
   owner: FrameOwner;
-  blamed: boolean;
+  blamed?: boolean;
+  offset?: string;
 }
 
 export interface Exception {
   type: string;
-  reason: string;
+  exceptionMessage: string;
   frames: Frame[];
   rawStackTrace: string;
+  title?: string;
+  subtitle?: string;
+  nested?: boolean;
+  blamed?: boolean;
 }
 
 export interface Thread {
   name: string;
+  title?: string;
   frames: Frame[];
   crashed: boolean;
 }
@@ -61,12 +69,19 @@ export interface Device {
   model: string;
   manufacturer: string;
   architecture: string;
+  displayName?: string;
+  marketingName?: string;
+  companyName?: string;
+  formFactor?: string;
 }
 
 export interface OS {
   displayVersion: string;
-  name: string;
+  os: string;
   type: string;
+  modificationState?: string;
+  deviceType?: string;
+  displayName?: string;
 }
 
 export interface Version {
@@ -75,8 +90,8 @@ export interface Version {
 }
 
 export interface Memory {
-  used: number;
-  free: number;
+  used: string;
+  free: string;
 }
 
 export interface CustomKey {
@@ -98,6 +113,16 @@ export interface Event {
   memory: Memory;
   customKeys: CustomKey[];
   logs: string;
+  bundleOrPackage?: string;
+  receivedTime?: string;
+  issue?: string;
+  installationUuid?: string;
+  crashlyticsSdkVersion?: string;
+  appOrientation?: string;
+  deviceOrientation?: string;
+  storage?: Record<string, string>;
+  processState?: string;
+  issueVariant?: string;
 }
 
 // Raw API response types (reports/topIssues)
@@ -123,7 +148,7 @@ export interface TopIssuesRawResponse {
 // Normalized response used by commands
 
 export interface TopIssuesResponse {
-  issues: Issue[];
+  issues: EnrichedIssue[];
   nextPageToken?: string;
 }
 
