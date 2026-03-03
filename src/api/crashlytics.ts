@@ -7,11 +7,17 @@ import type {
   TopIssuesResponse,
 } from "./types.js";
 
-const SINCE_MAP: Record<string, [string, string]> = {
-  "7d": ["filter.eventTimestamp>=", "168"],
-  "30d": ["filter.eventTimestamp>=", "720"],
-  "90d": ["filter.eventTimestamp>=", "2160"],
-};
+/** Maps human-friendly windows to ISO start_time values. */
+function sinceToStartTime(since: string): string | undefined {
+  const hours: Record<string, number> = {
+    "7d": 7 * 24,
+    "30d": 30 * 24,
+    "90d": 90 * 24,
+  };
+  const h = hours[since];
+  if (!h) return undefined;
+  return new Date(Date.now() - h * 60 * 60_000).toISOString();
+}
 
 export interface TopIssuesOpts {
   errorTypes?: ErrorType[];
@@ -24,20 +30,23 @@ export function getTopIssues(opts: TopIssuesOpts = {}) {
   const params: Record<string, string> = {};
 
   if (opts.pageSize) {
-    params.pageSize = String(opts.pageSize);
+    params.page_size = String(opts.pageSize);
   }
 
   if (opts.errorTypes?.length) {
-    params["filter.errorTypes"] = opts.errorTypes.join(",");
+    params["filter.issue.error_types"] = opts.errorTypes.join(",");
   }
 
   if (opts.signals?.length) {
-    params["filter.signals"] = opts.signals.join(",");
+    params["filter.issue.signals"] = opts.signals.join(",");
   }
 
-  if (opts.since && SINCE_MAP[opts.since]) {
-    const [key, value] = SINCE_MAP[opts.since];
-    params[key] = value;
+  if (opts.since) {
+    const startTime = sinceToStartTime(opts.since);
+    if (startTime) {
+      params["filter.interval.start_time"] = startTime;
+      params["filter.interval.end_time"] = new Date().toISOString();
+    }
   }
 
   return apiGet<TopIssuesResponse>("reports/topIssues", params);
@@ -52,7 +61,7 @@ export function listEvents(issueId: string, pageSize?: number) {
     "filter.issue.id": issueId,
   };
   if (pageSize) {
-    params.pageSize = String(pageSize);
+    params.page_size = String(pageSize);
   }
   return apiGet<ListEventsResponse>("events", params);
 }

@@ -246,6 +246,57 @@ describe("runInit", () => {
     });
   });
 
+  describe("non-interactive mode (params)", () => {
+    test("skips prompts when --project and --app provided", async () => {
+      const io = defaultIO();
+      await runInit(io, { project: "my-app-prod", app: "1:111111:android:aaa" });
+      expect(io.writeConfig).toHaveBeenCalledWith({
+        projectNumber: "111111",
+        appId: "1:111111:android:aaa",
+      });
+    });
+
+    test("matches project by projectNumber", async () => {
+      const io = defaultIO();
+      await runInit(io, { project: "111111", app: "1:111111:android:aaa" });
+      expect(io.writeConfig).toHaveBeenCalledWith({
+        projectNumber: "111111",
+        appId: "1:111111:android:aaa",
+      });
+    });
+
+    test("throws on unknown project", async () => {
+      const io = defaultIO();
+      await expect(runInit(io, { project: "nonexistent" })).rejects.toThrow(
+        "Project nonexistent not found",
+      );
+    });
+
+    test("throws on unknown app", async () => {
+      const io = defaultIO();
+      await expect(
+        runInit(io, { project: "my-app-prod", app: "1:111111:android:zzz" }),
+      ).rejects.toThrow("App 1:111111:android:zzz not found");
+    });
+
+    test("project-only param still prompts for app", async () => {
+      const prompts: string[] = [];
+      const io = defaultIO({
+        createReadlineInterface: () => ({
+          question: (prompt: string, cb: (answer: string) => void) => {
+            prompts.push(prompt);
+            cb("1");
+          },
+          close: () => {},
+        }),
+      });
+      await runInit(io, { project: "my-app-prod" });
+      // Should not prompt for project, only for app
+      expect(prompts).toHaveLength(1);
+      expect(prompts[0]).toContain("Android apps:");
+    });
+  });
+
   describe("app with no displayName", () => {
     test("falls back to appId in prompt", async () => {
       const prompts: string[] = [];

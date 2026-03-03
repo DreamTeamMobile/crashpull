@@ -28,9 +28,15 @@ const COMMANDS: CommandDef[] = [
   {
     name: "init",
     summary: "Link a Firebase project and app to this directory",
-    usage: `${BIN} init`,
-    flags: [],
-    examples: [`${BIN} init`],
+    usage: `${BIN} init [options]`,
+    flags: [
+      { flag: "--project <id>", description: "Firebase project ID or number (skip interactive prompt)" },
+      { flag: "--app <id>", description: "Firebase app ID (skip interactive prompt)" },
+    ],
+    examples: [
+      `${BIN} init`,
+      `${BIN} init --project my-app-prod --app 1:123:android:abc`,
+    ],
   },
   {
     name: "list",

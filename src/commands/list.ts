@@ -34,6 +34,19 @@ function mapErrorType(type?: string): ErrorType[] | undefined {
   return mapped ? [mapped] : undefined;
 }
 
+const SIGNAL_MAP: Record<string, string> = {
+  early: "SIGNAL_EARLY",
+  fresh: "SIGNAL_FRESH",
+  regressed: "SIGNAL_REGRESSED",
+  repetitive: "SIGNAL_REPETITIVE",
+};
+
+function mapSignal(signal?: string): string[] | undefined {
+  if (!signal) return undefined;
+  const mapped = SIGNAL_MAP[signal.toLowerCase()];
+  return mapped ? [mapped] : undefined;
+}
+
 function isFresh(issue: Issue, now: number): boolean {
   if (!issue.createTime) return false;
   return now - new Date(issue.createTime).getTime() < FRESH_THRESHOLD_MS;
@@ -57,7 +70,7 @@ export async function runList(args: ListArgs): Promise<string> {
 
   const response = await getTopIssues({
     errorTypes: mapErrorType(args.type),
-    signals: args.signal ? [args.signal] : undefined,
+    signals: mapSignal(args.signal),
     since,
     pageSize: limit,
   });

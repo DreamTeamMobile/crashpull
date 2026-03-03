@@ -67,7 +67,12 @@ function parseChoice(input: string, max: number): number | null {
   return n;
 }
 
-export async function runInit(io: InitIO = defaultIO): Promise<string> {
+export interface InitParams {
+  project?: string;
+  app?: string;
+}
+
+export async function runInit(io: InitIO = defaultIO, params?: InitParams): Promise<string> {
   // Step 1: List Firebase projects
   let projects: FirebaseProject[];
   try {
@@ -87,25 +92,34 @@ export async function runInit(io: InitIO = defaultIO): Promise<string> {
     throw new Error("No Firebase projects found. Create one at https://console.firebase.google.com");
   }
 
-  // Step 2: User picks a project
-  const projectLines = projects.map(
-    (p, i) => `  ${i + 1}) ${p.displayName} (${p.projectId})`,
-  );
-  const projectPrompt = [
-    "Firebase projects:",
-    ...projectLines,
-    "",
-    `Choose project (1-${projects.length}): `,
-  ].join("\n");
-
-  const projectAnswer = await ask(io, projectPrompt);
-  const projectIdx = parseChoice(projectAnswer, projects.length);
-  if (projectIdx === null) {
-    throw new Error(`Invalid choice: ${projectAnswer}`);
+  // Determine project
+  let project: FirebaseProject | undefined;
+  if (params?.project) {
+    project = projects.find(
+      (p) => p.projectId === params.project || p.projectNumber === params.project,
+    );
+    if (!project) {
+      throw new Error(`Project ${params.project} not found`);
+    }
+  } else {
+    const projectLines = projects.map(
+      (p, i) => `  ${i + 1}) ${p.displayName} (${p.projectId})`,
+    );
+    const projectPrompt = [
+      "Firebase projects:",
+      ...projectLines,
+      "",
+      `Choose project (1-${projects.length}): `,
+    ].join("\n");
+    const projectAnswer = await ask(io, projectPrompt);
+    const projectIdx = parseChoice(projectAnswer, projects.length);
+    if (projectIdx === null) {
+      throw new Error(`Invalid choice: ${projectAnswer}`);
+    }
+    project = projects[projectIdx - 1];
   }
-  const project = projects[projectIdx - 1];
 
-  // Step 3: List apps for chosen project
+  // Step 2: List apps for chosen project
   let apps: FirebaseApp[];
   try {
     const result = await execJson<{ result: FirebaseApp[] }>(
@@ -118,7 +132,7 @@ export async function runInit(io: InitIO = defaultIO): Promise<string> {
     throw new Error(`Could not list apps for project ${project.projectId}`);
   }
 
-  // Filter to Android apps only and deduplicate by appId
+  // Deduplicate by appId, filter to Android
   const seen = new Set<string>();
   const androidApps = apps.filter((a) => {
     if (a.platform !== "ANDROID" || seen.has(a.appId)) return false;
@@ -131,25 +145,32 @@ export async function runInit(io: InitIO = defaultIO): Promise<string> {
     );
   }
 
-  // Step 4: User picks an app
-  const appLines = androidApps.map(
-    (a, i) => `  ${i + 1}) ${a.displayName || a.appId} (${a.appId})`,
-  );
-  const appPrompt = [
-    "Android apps:",
-    ...appLines,
-    "",
-    `Choose app (1-${androidApps.length}): `,
-  ].join("\n");
-
-  const appAnswer = await ask(io, appPrompt);
-  const appIdx = parseChoice(appAnswer, androidApps.length);
-  if (appIdx === null) {
-    throw new Error(`Invalid choice: ${appAnswer}`);
+  // Determine app
+  let app: FirebaseApp | undefined;
+  if (params?.app) {
+    app = androidApps.find((a) => a.appId === params.app);
+    if (!app) {
+      throw new Error(`App ${params.app} not found in project ${project.displayName}`);
+    }
+  } else {
+    const appLines = androidApps.map(
+      (a, i) => `  ${i + 1}) ${a.displayName || a.appId} (${a.appId})`,
+    );
+    const appPrompt = [
+      "Android apps:",
+      ...appLines,
+      "",
+      `Choose app (1-${androidApps.length}): `,
+    ].join("\n");
+    const appAnswer = await ask(io, appPrompt);
+    const appIdx = parseChoice(appAnswer, androidApps.length);
+    if (appIdx === null) {
+      throw new Error(`Invalid choice: ${appAnswer}`);
+    }
+    app = androidApps[appIdx - 1];
   }
-  const app = androidApps[appIdx - 1];
 
-  // Step 5: Write config
+  // Write config
   await io.writeConfig({
     projectNumber: project.projectNumber,
     appId: app.appId,

@@ -25,48 +25,61 @@ describe("getTopIssues", () => {
     expect(mockApiGet).toHaveBeenCalledWith("reports/topIssues", {});
   });
 
-  test("passes pageSize param", async () => {
+  test("passes page_size param", async () => {
     await getTopIssues({ pageSize: 25 });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.pageSize).toBe("25");
+    expect(params.page_size).toBe("25");
   });
 
-  test("passes errorTypes as separate query param", async () => {
+  test("passes errorTypes as filter.issue.error_types", async () => {
     await getTopIssues({ errorTypes: ["FATAL", "ANR"] });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params["filter.errorTypes"]).toBe("FATAL,ANR");
+    expect(params["filter.issue.error_types"]).toBe("FATAL,ANR");
   });
 
-  test("passes signals as separate query param", async () => {
-    await getTopIssues({ signals: ["SIGABRT", "SIGSEGV"] });
+  test("passes signals as filter.issue.signals", async () => {
+    await getTopIssues({ signals: ["SIGNAL_FRESH", "SIGNAL_REGRESSED"] });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params["filter.signals"]).toBe("SIGABRT,SIGSEGV");
+    expect(params["filter.issue.signals"]).toBe("SIGNAL_FRESH,SIGNAL_REGRESSED");
   });
 
-  test("maps since=7d to query param", async () => {
+  test("maps since=7d to ISO interval params", async () => {
+    const before = Date.now();
     await getTopIssues({ since: "7d" });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params["filter.eventTimestamp>="]).toBe("168");
+    const start = new Date(params["filter.interval.start_time"]).getTime();
+    const end = new Date(params["filter.interval.end_time"]).getTime();
+    // start should be ~7 days ago (within 1 second tolerance)
+    expect(before - start).toBeGreaterThan(7 * 24 * 60 * 60_000 - 1000);
+    expect(before - start).toBeLessThan(7 * 24 * 60 * 60_000 + 1000);
+    // end should be ~now
+    expect(end).toBeGreaterThanOrEqual(before);
   });
 
-  test("maps since=30d to query param", async () => {
+  test("maps since=30d to interval params", async () => {
+    const before = Date.now();
     await getTopIssues({ since: "30d" });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params["filter.eventTimestamp>="]).toBe("720");
+    const start = new Date(params["filter.interval.start_time"]).getTime();
+    expect(before - start).toBeGreaterThan(30 * 24 * 60 * 60_000 - 1000);
+    expect(before - start).toBeLessThan(30 * 24 * 60 * 60_000 + 1000);
   });
 
-  test("maps since=90d to query param", async () => {
+  test("maps since=90d to interval params", async () => {
+    const before = Date.now();
     await getTopIssues({ since: "90d" });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params["filter.eventTimestamp>="]).toBe("2160");
+    const start = new Date(params["filter.interval.start_time"]).getTime();
+    expect(before - start).toBeGreaterThan(90 * 24 * 60 * 60_000 - 1000);
+    expect(before - start).toBeLessThan(90 * 24 * 60 * 60_000 + 1000);
   });
 
   test("combines multiple filters as separate query params", async () => {
     await getTopIssues({ errorTypes: ["FATAL"], since: "7d" });
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params["filter.errorTypes"]).toBe("FATAL");
-    expect(params["filter.eventTimestamp>="]).toBe("168");
-    expect(params.filter).toBeUndefined();
+    expect(params["filter.issue.error_types"]).toBe("FATAL");
+    expect(params["filter.interval.start_time"]).toBeDefined();
+    expect(params["filter.interval.end_time"]).toBeDefined();
   });
 
   test("returns API response", async () => {
@@ -99,16 +112,16 @@ describe("listEvents", () => {
     expect(params["filter.issue.id"]).toBe("abc123");
   });
 
-  test("passes pageSize when provided", async () => {
+  test("passes page_size when provided", async () => {
     await listEvents("abc123", 10);
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.pageSize).toBe("10");
+    expect(params.page_size).toBe("10");
   });
 
-  test("omits pageSize when not provided", async () => {
+  test("omits page_size when not provided", async () => {
     await listEvents("abc123");
     const [, params] = mockApiGet.mock.calls[0] as [string, Record<string, string>];
-    expect(params.pageSize).toBeUndefined();
+    expect(params.page_size).toBeUndefined();
   });
 
   test("returns events data", async () => {

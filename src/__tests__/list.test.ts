@@ -73,7 +73,7 @@ describe("runList", () => {
     test("passes --signal as signals array", async () => {
       await runList({ signal: "fresh" });
       const [opts] = mockGetTopIssues.mock.calls[0] as [Record<string, unknown>];
-      expect(opts.signals).toEqual(["fresh"]);
+      expect(opts.signals).toEqual(["SIGNAL_FRESH"]);
     });
 
     test("passes --since override", async () => {

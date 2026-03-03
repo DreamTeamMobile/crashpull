@@ -19,9 +19,13 @@ async function main(): Promise<void> {
     case "help":
       output = runHelp(args);
       break;
-    case "init":
-      output = await runInit();
+    case "init": {
+      const initParams = (args.project || args.app)
+        ? { project: args.project as string | undefined, app: args.app as string | undefined }
+        : undefined;
+      output = await runInit(undefined, initParams);
       break;
+    }
     case "list":
       output = await runList(args);
       break;
