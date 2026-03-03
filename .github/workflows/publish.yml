@@ -8,10 +8,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # TODO: Switch to npm trusted publishing (provenance) once supported
-    # by this org. See: https://docs.npmjs.com/generating-provenance-statements
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +29,4 @@ jobs:
 
       - run: npm run lint
       - run: bun test
-      - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --access public --provenance
