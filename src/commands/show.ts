@@ -1,24 +1,11 @@
-import { getIssue, getTopIssues, listEvents } from "../api/crashlytics.js";
+import { getIssue, listEvents } from "../api/crashlytics.js";
 import type { Event, Exception, Frame, Issue } from "../api/types.js";
 import { formatAge, formatJson } from "../format.js";
+import { resolveIssueId } from "../resolve-id.js";
 
 export interface ShowArgs {
   issueId?: string;
   format?: string;
-}
-
-async function resolveIssueId(idArg: string): Promise<string> {
-  // Full ID — use as-is
-  if (idArg.length > 8) return idArg;
-
-  // Short prefix — search top issues for a match
-  const response = await getTopIssues({ pageSize: 100 });
-  const issues = response.issues ?? [];
-  const match = issues.find((i) => i.id.startsWith(idArg));
-  if (!match) {
-    throw new Error(`No issue found matching prefix "${idArg}"`);
-  }
-  return match.id;
 }
 
 function formatIssueHeader(issue: Issue, now: number): string {
