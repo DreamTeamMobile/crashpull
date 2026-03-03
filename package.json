@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsup src/bin.ts --format esm --target node18 --clean",
     "lint": "oxlint src/",
-    "dev": "tsx src/bin.ts"
+    "dev": "tsx src/bin.ts",
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
