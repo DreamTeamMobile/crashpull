@@ -4,6 +4,7 @@ import { describe, expect, test, mock, beforeEach } from "bun:test";
 const mockReadFile = mock(() => Promise.resolve(""));
 mock.module("node:fs/promises", () => ({
   readFile: mockReadFile,
+  writeFile: mock(() => Promise.resolve()),
 }));
 
 // Mock global fetch
