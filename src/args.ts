@@ -64,7 +64,10 @@ export function route(argv: string[]): RouteResult {
     const cmd = positionals[0];
     return {
       command: "help",
-      args: { topic: cmd && COMMANDS.has(cmd as Command) ? cmd : undefined },
+      args: {
+        topic: cmd && COMMANDS.has(cmd as Command) ? cmd : undefined,
+        format: preValues.format,
+      },
     };
   }
 
@@ -115,10 +118,10 @@ export function route(argv: string[]): RouteResult {
     }
 
     case "help": {
-      const { positionals: pos } = parseGlobal(commandArgv);
+      const { values, positionals: pos } = parseGlobal(commandArgv);
       return {
         command,
-        args: { topic: pos[0] },
+        args: { topic: pos[0], format: values.format },
       };
     }
 
