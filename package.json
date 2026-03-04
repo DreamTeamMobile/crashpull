@@ -1,6 +1,6 @@
 {
   "name": "crashpull",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "type": "module",
   "bin": "./dist/bin.js",
   "files": [
@@ -27,6 +27,18 @@
     "type": "git",
     "url": "https://github.com/DreamTeamMobile/crashpull.git"
   },
+  "keywords": [
+    "firebase",
+    "crashlytics",
+    "crashes",
+    "cli",
+    "agentic",
+    "llm",
+    "devtools",
+    "android",
+    "crash-reporting",
+    "mcp"
+  ],
   "license": "MIT",
   "author": "DreamTeamMobile",
   "description": "Zero-dependency CLI that pulls crash data from Firebase Crashlytics into your terminal and agentic coding workflows"
