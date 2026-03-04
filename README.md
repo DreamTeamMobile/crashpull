@@ -68,6 +68,7 @@ Add this to your project's `CLAUDE.md` to give your agent access to crash data:
 | `list`    | Top issues with `--type`, `--signal`, `--since`, `--limit` filters |
 | `show`    | Issue detail + full stack trace                  |
 | `resolve` | Mark an issue as resolved                        |
+| `llm`     | Compact agent guide — pipe into LLM system prompts |
 | `help`    | Usage info (also supports `--format json`)       |
 
 ## License
